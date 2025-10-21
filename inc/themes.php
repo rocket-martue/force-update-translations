@@ -78,7 +78,9 @@ class Theme_Force_Update_Translations extends Force_Update_Translations {
 		$show_results = false;
 		if ( isset( $_POST['force_translate_themes'] ) ) {
 			// Verify nonce for CSRF protection.
-			check_admin_referer( 'force_translate_themes', 'force_translate_themes_nonce' );
+			if ( ! isset( $_POST['force_translate_themes_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['force_translate_themes_nonce'] ) ), 'force_translate_themes' ) ) {
+				wp_die( esc_html__( 'Security check failed. Please try again.', 'force-update-translations' ) );
+			}
 
 			// Check user permission.
 			if ( ! current_user_can( 'edit_theme_options' ) ) {
