@@ -69,7 +69,7 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 		// Verify nonce for CSRF protection.
 		if ( ! isset( $_GET['force_translate_nonce'] ) ||
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['force_translate_nonce'] ) ), 'force_translate_plugin_' . $plugin_file ) ) {
-			$this->admin_notices['csrf_error'][] = array(
+			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
 				'content' => esc_html__( 'Security check failed. Please try again.', 'force-update-translations' ),
 			);
@@ -79,7 +79,7 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 
 		// Check user permission.
 		if ( ! current_user_can( 'update_plugins' ) ) {
-			$this->admin_notices['permission_error'][] = array(
+			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
 				'content' => esc_html__( 'You do not have permission to update translations.', 'force-update-translations' ),
 			);
@@ -87,12 +87,29 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 			return;
 		}
 
-		if ( ! preg_match( '/^([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_.]+.php)$/', $plugin_file, $plugin_slug ) ) {
-			$this->admin_notices['invalid_param'][] = array(
+		// Validate plugin file format and prevent directory traversal.
+		if ( ! preg_match( '/^([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_]+\.php)$/', $plugin_file, $plugin_slug ) ) {
+			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
 				'content' => sprintf(
 					/* Translators: %s: parameter */
 					esc_html__( 'Invalid parameter: %s', 'force-update-translations' ),
+					esc_html( $plugin_file )
+				),
+			);
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
+			return;
+		}
+
+		// Additional security: verify the plugin file actually exists and is in the plugins directory.
+		$plugin_path = WP_PLUGIN_DIR . '/' . $plugin_file;
+		$real_path   = realpath( $plugin_path );
+		if ( false === $real_path || 0 !== strpos( $real_path, WP_PLUGIN_DIR ) ) {
+			$this->admin_notices['error'][] = array(
+				'status'  => 'error',
+				'content' => sprintf(
+					/* Translators: %s: parameter */
+					esc_html__( 'Invalid plugin file: %s', 'force-update-translations' ),
 					esc_html( $plugin_file )
 				),
 			);
