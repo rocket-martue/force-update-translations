@@ -1,33 +1,37 @@
 <?php
 /**
+ * Force update translations for plugins.
+ *
  * @package update-force-translations
  * @author mayukojpn
  * @license GPL-2.0+
  */
-
 class Plugin_Force_Update_Translations extends Force_Update_Translations {
-
 	/**
 	 * Constructor.
 	 */
-	function __construct() {
+	public function __construct() {
 		add_action( 'plugin_action_links', array( $this, 'plugin_action_links' ), 10, 2 );
 		add_action( 'network_admin_plugin_action_links', array( $this, 'plugin_action_links' ), 10, 2 );
-		add_action( 'pre_current_active_plugins', array( $this, 'pre_current_active_plugins' ) );
+		add_action( 'admin_init', array( $this, 'handle_translation_update' ) );
 	}
 
 
 	/**
 	 * Add plugin action link.
 	 *
-	 * @param string $actions
-	 * @param string $plugin_file
+	 * @param array  $actions     An array of plugin action links.
+	 * @param string $plugin_file Path to the plugin file relative to the plugins directory.
 	 *
-	 * @return array $actions    File path to get source.
+	 * @return array Modified array of plugin action links.
 	 */
-	function plugin_action_links( $actions, $plugin_file ) {
-		$url         = admin_url( 'plugins.php?force_translate=' . $plugin_file );
-		$new_actions = array (
+	public function plugin_action_links( $actions, $plugin_file ) {
+		$url         = wp_nonce_url(
+			admin_url( 'plugins.php?force_translate=' . $plugin_file ),
+			'force_translate_plugin_' . $plugin_file,
+			'force_translate_nonce'
+		);
+		$new_actions = array(
 			'force_translate' => sprintf(
 				'<a href="%1$s">%2$s</a>',
 				esc_url( $url ),
@@ -40,30 +44,51 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 		$plugin_state = get_site_transient( 'update_plugins' );
 		if ( isset( $plugin_state->response[ $plugin_file ]->id ) || isset( $plugin_state->no_update[ $plugin_file ]->id ) ) {
 			$on_wporg = true;
-		};
+		}
 
 		// Add action if plugin is on wordpress.org and if user Locale isn't 'en_US'.
 		if ( ( $on_wporg ) && ( get_user_locale() !== 'en_US' ) ) {
 			$actions = array_merge( $actions, $new_actions );
-		};
+		}
 		return $actions;
-
 	}
 
 
 	/**
-	 * Main plugin action.
+	 * Handle translation update request.
 	 *
-	 * @return null
+	 * @return void
 	 */
-	function pre_current_active_plugins() {
+	public function handle_translation_update() {
 		if ( ! isset( $_GET['force_translate'] ) ) {
 			return;
 		}
 
-		$plugin_file = $_GET['force_translate'];
-		if ( ! preg_match( "/^([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_.]+.php)$/", $plugin_file, $plugin_slug ) ) {
-			$this->admin_notices[] = array(
+		$plugin_file = sanitize_text_field( wp_unslash( $_GET['force_translate'] ) );
+
+		// Verify nonce for CSRF protection.
+		if ( ! isset( $_GET['force_translate_nonce'] ) ||
+			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['force_translate_nonce'] ) ), 'force_translate_plugin_' . $plugin_file ) ) {
+			$this->admin_notices['csrf_error'][] = array(
+				'status'  => 'error',
+				'content' => esc_html__( 'Security check failed. Please try again.', 'force-update-translations' ),
+			);
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
+			return;
+		}
+
+		// Check user permission.
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			$this->admin_notices['permission_error'][] = array(
+				'status'  => 'error',
+				'content' => esc_html__( 'You do not have permission to update translations.', 'force-update-translations' ),
+			);
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
+			return;
+		}
+
+		if ( ! preg_match( '/^([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_.]+.php)$/', $plugin_file, $plugin_slug ) ) {
+			$this->admin_notices['invalid_param'][] = array(
 				'status'  => 'error',
 				'content' => sprintf(
 					/* Translators: %s: parameter */
@@ -71,7 +96,7 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 					esc_html( $plugin_file )
 				),
 			);
-			static::admin_notices();
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 			return;
 		}
 

@@ -5,9 +5,22 @@
  * Author:      Mayo Moriyama & Contributors
  * Author URI:  https://github.com/mayukojpn/force-update-translations/graphs/contributors
  * Version:     0.5
+ *
+ * @package Force_Update_Translations
+ */
+
+/**
+ * Force Update Translations main class.
+ *
+ * Handles manual translation updates for WordPress themes and plugins.
  */
 class Force_Update_Translations {
 
+	/**
+	 * Admin notices array.
+	 *
+	 * @var array<string, array<int, array<string, string>>>
+	 */
 	public $admin_notices = array();
 
 	/**
@@ -18,7 +31,6 @@ class Force_Update_Translations {
 		include 'lib/glotpress/locales.php';
 		include 'inc/plugins.php';
 		include 'inc/themes.php';
-
 	}
 
 	/**
@@ -93,7 +105,7 @@ class Force_Update_Translations {
 		$response = wp_remote_get( $source );
 
 		if ( ! is_array( $response )
-			|| $response['headers']['content-type'] !== 'application/octet-stream' ) {
+			|| 'application/octet-stream' !== $response['headers']['content-type'] ) {
 			return new WP_Error(
 				'fdt-source-not-found',
 				sprintf(
@@ -105,11 +117,11 @@ class Force_Update_Translations {
 		} else {
 			$translation_path = WP_LANG_DIR . '/' . $target;
 
-			if ( ! file_exists( pathinfo( $translation_path,  PATHINFO_DIRNAME ) ) ) {
+			if ( ! file_exists( pathinfo( $translation_path, PATHINFO_DIRNAME ) ) ) {
 				mkdir( pathinfo( $translation_path, PATHINFO_DIRNAME ), 0777, true );
 			}
 
-			file_put_contents( $translation_path, $response['body'] ); // phpcs:ignore
+            file_put_contents( $translation_path, $response['body'] ); // phpcs:ignore
 			return;
 		}
 	}
@@ -136,7 +148,7 @@ class Force_Update_Translations {
 			$project,
 			$locale_slug
 		);
-		$path = ( $format === 'po' ) ? $path : $path . '&format=' . $format;
+		$path = ( 'po' === $format ) ? $path : $path . '&format=' . $format;
 		$path = esc_url_raw( $path );
 		return $path;
 	}
@@ -151,7 +163,7 @@ class Force_Update_Translations {
 		foreach ( $this->admin_notices as $project ) {
 			foreach ( $project as $notice ) {
 				?>
-				<div class="notice notice-<?php echo esc_attr( $notice['status'] ); ?> inline">
+				<div class="notice notice-<?php echo esc_attr( $notice['status'] ); ?> is-dismissible">
 					<p><?php echo wp_kses_post( $notice['content'] ); ?></p>
 				</div>
 				<?php
