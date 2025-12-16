@@ -71,7 +71,7 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['force_translate_nonce'] ) ), 'force_translate_plugin_' . $plugin_file ) ) {
 			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
-				'content' => esc_html__( 'Security check failed. Please try again.', 'force-update-translations' ),
+				'content' => esc_html__( 'Security verification failed. Please refresh the page and try again.', 'force-update-translations' ),
 			);
 			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 			return;
@@ -81,7 +81,7 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
-				'content' => esc_html__( 'You do not have permission to update translations.', 'force-update-translations' ),
+				'content' => esc_html__( 'You do not have permission to update translation files.', 'force-update-translations' ),
 			);
 			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 			return;
@@ -108,8 +108,8 @@ class Plugin_Force_Update_Translations extends Force_Update_Translations {
 			$this->admin_notices['error'][] = array(
 				'status'  => 'error',
 				'content' => sprintf(
-					/* Translators: %s: parameter */
-					esc_html__( 'Invalid plugin file: %s', 'force-update-translations' ),
+					/* Translators: %s: plugin file path (e.g., plugin-name/plugin-file.php) */
+			    esc_html__( 'The plugin file could not be found or is invalid: %s', 'force-update-translations' ),
 					esc_html( $plugin_file )
 				),
 			);

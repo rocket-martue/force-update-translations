@@ -79,12 +79,12 @@ class Theme_Force_Update_Translations extends Force_Update_Translations {
 		if ( isset( $_POST['force_translate_themes'] ) ) {
 			// Verify nonce for CSRF protection.
 			if ( ! isset( $_POST['force_translate_themes_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['force_translate_themes_nonce'] ) ), 'force_translate_themes' ) ) {
-				wp_die( esc_html__( 'Security check failed. Please try again.', 'force-update-translations' ) );
+				wp_die( esc_html__( 'Security verification failed. Please refresh the page and try again.', 'force-update-translations' ) );
 			}
 
 			// Check user permission.
 			if ( ! current_user_can( 'edit_theme_options' ) ) {
-				wp_die( esc_html__( 'You do not have permission to update translations.', 'force-update-translations' ) );
+				wp_die( esc_html__( 'You do not have permission to update translation files.', 'force-update-translations' ) );
 			}
 
 			// Get projects translation files.
@@ -94,7 +94,7 @@ class Theme_Force_Update_Translations extends Force_Update_Translations {
 
 		?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Update Translations', 'force-update-translations' ); ?></h1>
+		<h1><?php esc_html_e( 'Update translation', 'force-update-translations' ); ?></h1>
 		<p>
 			<?php
 			// Check if has a parent theme and it exists.
@@ -109,10 +109,10 @@ class Theme_Force_Update_Translations extends Force_Update_Translations {
 		<?php if ( ! empty( $projects ) ) : ?>
 			<form method="post" action="">
 				<?php wp_nonce_field( 'force_translate_themes', 'force_translate_themes_nonce' ); ?>
-				<?php submit_button( __( 'Update Theme Translations', 'force-update-translations' ), 'primary', 'force_translate_themes' ); ?>
+				<?php submit_button( __( 'Update translation', 'force-update-translations' ), 'primary', 'force_translate_themes' ); ?>
 			</form>
 		<?php else : ?>
-			<p><?php esc_html_e( 'No themes available for translation update.', 'force-update-translations' ); ?></p>
+			<p><?php esc_html_e( 'Your active theme is not available on WordPress.org. Only themes from WordPress.org support translation updates.', 'force-update-translations' ); ?></p>
 		<?php endif; ?>
 
 		<?php if ( $show_results ) : ?>
