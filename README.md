@@ -26,6 +26,15 @@ To download the translation files for a plugin:
 
 ## Changelog
 
+= 0.6.0 - 2024-12-17 =
+* Security: Fixed CSRF vulnerability (CVE-2025-58236)
+* Security: Added nonce verification and permission checks for translation updates
+* Security: Improved input validation and path traversal protection
+* Improvement: PHP 8.2 compatibility enhancements
+* Improvement: Code quality improvements (PHPDoc, visibility declarations)
+* Update: Synchronized GlotPress locales library to latest upstream version
+* Credits: Vulnerability discovered by @nblirwn (Patchstack Alliance), security patch implemented by @rocket-martue
+
 = 0.5 =
 * Child theme support. props @pedro-mendonca
 
